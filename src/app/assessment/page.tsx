@@ -38,11 +38,21 @@ export default function AssessmentPage() {
           .order('version_no', { ascending: false })
           .limit(1)
 
-        if (queryError) throw queryError
-        if (!data || data.length === 0) throw new Error('No published question version found')
+        console.log('Question fetch result:', { data, queryError })
 
+        if (queryError) {
+          console.error('Supabase RLS/query error:', queryError)
+          throw queryError
+        }
+        if (!data || data.length === 0) {
+          console.error('No published questions found. Data:', data)
+          throw new Error('No published question version found')
+        }
+
+        console.log('Loaded question version:', data[0])
         setQuestionVersion(data[0])
       } catch (err: any) {
+        console.error('Assessment load error:', err)
         setError(err.message || 'Failed to load assessment')
       } finally {
         setLoading(false)
@@ -73,31 +83,42 @@ export default function AssessmentPage() {
       // Score locally
       const scores = scoreSubmission(rawAnswers)
 
+      // Build submission payload - only include columns that exist
+      const submissionPayload = {
+        round: 'pre',
+        question_version_id: questionVersion.id,
+        raw_answers: rawAnswers,
+        domain_scores: scores.domainScores,
+        overall: scores.overall,
+        free_text: freeText,
+        // Add competence columns - will be ignored if columns don't exist
+        ...(scores.personalCompetence !== undefined && { personal_competence: scores.personalCompetence }),
+        ...(scores.socialCompetence !== undefined && { social_competence: scores.socialCompetence }),
+      }
+
+      console.log('Submitting payload:', submissionPayload)
+
       // Insert submission directly to Supabase (anon insert access via RLS)
       const { data: submission, error: subError } = await supabase
         .from('submission')
-        .insert([
-          {
-            round: 'pre',
-            question_version_id: questionVersion.id,
-            raw_answers: rawAnswers,
-            domain_scores: scores.domainScores,
-            overall: scores.overall,
-            personal_competence: scores.personalCompetence,
-            social_competence: scores.socialCompetence,
-            free_text: freeText,
-          },
-        ])
+        .insert([submissionPayload])
         .select()
 
-      if (subError) throw subError
+      console.log('Submission response:', { data: submission, error: subError })
+
+      if (subError) {
+        console.error('Submission error details:', subError)
+        throw subError
+      }
       if (!submission || submission.length === 0) throw new Error('Failed to create submission')
 
+      console.log('Success! Submission:', submission[0])
       setResults({
         submission: submission[0],
         scores,
       })
     } catch (err: any) {
+      console.error('Submit error:', err)
       setError(err.message || 'Failed to submit assessment')
     } finally {
       setLoading(false)
