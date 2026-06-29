@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTheme } from 'next-themes'
 import { signOut } from '@/lib/auth'
-import { supabase } from '@/lib/supabase'
+import { createClient } from '@/lib/supabase/client'
 
 export function Header({ onMenuClick }: { onMenuClick: () => void }) {
   const [mounted, setMounted] = useState(false)
@@ -15,6 +15,7 @@ export function Header({ onMenuClick }: { onMenuClick: () => void }) {
   useEffect(() => {
     setMounted(true)
     const getUser = async () => {
+      const supabase = createClient()
       const {
         data: { user },
       } = await supabase.auth.getUser()

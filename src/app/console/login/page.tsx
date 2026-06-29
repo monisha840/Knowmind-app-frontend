@@ -1,8 +1,8 @@
 'use client'
 
-import { FormEvent, useState } from 'react'
+import { FormEvent, useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { signIn } from '@/lib/auth'
+import { signIn, onAuthStateChange } from '@/lib/auth'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -17,11 +17,27 @@ export default function LoginPage() {
     setLoading(true)
 
     try {
+      console.log('🔐 Attempting login:', { email: email.trim() })
       await signIn(email.trim(), password.trim())
-      router.push('/console')
+      console.log('✓ Login successful')
+
+      // Refresh server state so middleware sees the session cookie
+      console.log('🔄 Refreshing server state...')
+      router.refresh()
+
+      // Wait for server refresh, then redirect
+      setTimeout(() => {
+        console.log('✓ Redirecting to /console')
+        router.push('/console')
+      }, 100)
     } catch (err: any) {
+      console.error('❌ Login error:', {
+        message: err.message,
+        code: err.code,
+        status: err.status,
+        fullError: err,
+      })
       setError(err.message || 'Login failed')
-    } finally {
       setLoading(false)
     }
   }
