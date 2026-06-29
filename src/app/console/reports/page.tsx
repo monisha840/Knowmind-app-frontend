@@ -141,8 +141,8 @@ export default function ReportsPage() {
                       </td>
                       <td className="px-4 py-3 text-text-muted text-xs">{new Date(report.created_at).toLocaleDateString()}</td>
                       <td className="px-4 py-3 text-center">
-                        <Link href={`/console/reports/${report.id}`} className="text-primary hover:text-primary-hover">
-                          View
+                        <Link href={`/console/reports/${report.id}/edit`} className="text-primary hover:text-primary-hover font-medium">
+                          Edit
                         </Link>
                       </td>
                     </tr>
