@@ -6,6 +6,7 @@ node_modules
 dist
 out
 EI_Documents_EOS
+src/data/*.xlsx
 *.log
 npm-debug.log*
 yarn-debug.log*
